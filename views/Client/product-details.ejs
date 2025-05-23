@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>
+        <%= product.name %> | Truck Haulers
+    </title>
+    <%- include("partials/head") %>
+</head>
+
+<body class="d-flex flex-column min-vh-100">
+
+    <%- include("partials/navbar") %>
+
+        <main class="flex-grow-1">
+            <div class="container py-5">
+                <div class="row g-5">
+                    <!-- Image Gallery -->
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <img id="mainImage" src="<%= product.productImages[0] %>"
+                                class="img-fluid rounded shadow-sm w-100" alt="Main Product Image">
+                        </div>
+                        <div class="d-flex flex-wrap gap-2">
+                            <% product.productImages.forEach(function(image, index) { %>
+                                <img src="<%= image %>" class="img-thumbnail"
+                                    style="width: 80px; height: 80px; object-fit: cover; cursor: pointer;"
+                                    onclick="document.getElementById('mainImage').src = '<%= image %>'"
+                                    alt="Thumbnail <%= index + 1 %>">
+                                <% }); %>
+                        </div>
+                    </div>
+
+                    <!-- Product Info -->
+                    <div class="col-md-6">
+                        <h2 class="mb-3">
+                            <%= product.name %>
+                        </h2>
+                        <p class="text-muted mb-2">
+                            <%= product.description %>
+                        </p>
+                        <p class="text-muted mb-2">
+                            <%= product.engine %>
+                        </p>
+                        <p class="text-muted mb-2">
+                            <%= product.gvw %>
+                        </p>
+                        <h4 class="text-success mb-4">₹ <%= product.price.toLocaleString() %>
+                        </h4>
+
+                        <!-- Wishlist Button -->
+
+                        <% const isWishlisted = wishlist && wishlist.items.some(item => item.product.id.toString() === product.id.toString()) %>
+
+                        <form action="/wishlist/toggle" method="post" class="mb-3">
+                            <input type="hidden" name="product" value="<%= product.id %>">
+                            <button type="submit" class="btn btn-outline-danger w-100">
+                                <i class="bi <%= isWishlisted ? 'bi-heart-fill' : 'bi-heart' %> me-2"></i>
+                                <%= isWishlisted ? 'Remove from Wishlist' : 'Add to Wishlist' %>
+                            </button>
+                        </form>
+
+                        <!-- Add to Cart -->
+                        <form action="/add-cart" method="post">
+                            <input type="hidden" name="product" value="<%= product.id %>">
+                            <button type="submit" class="btn btn-dark w-100">🛒 Add to Cart</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <%- include("partials/scrollUp") %>
+            <%- include("partials/footer") %>
+                <%- include("partials/scripts") %>
+
+</body>
+
+</html>

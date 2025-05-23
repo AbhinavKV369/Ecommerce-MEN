@@ -1,0 +1,84 @@
+<%- include("partials/head") %>
+
+    <body>
+        <%- include("partials/navbar") %>
+            <div class="container mt-5">
+                <h2 class="text-center ">Admin Panel - User Messages</h2>
+
+                <div class="mb-4">
+                    <form action="/admin/search-messages" method="post">
+                        <div class="input-group">
+                            <input type="text" class="form-control" name="search"
+                                placeholder="Search by subject or sender" aria-label="Search">
+                            <div class="input-group-append">
+                                <button class="btn btn-primary" type="submit">Search</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="row mt-4">
+                    <% if(messages.length> 0){ %>
+                        <% messages.forEach(message=> { %>
+                            <div class="col-md-4 mb-3" id="message-card">
+
+                                <div class="card" style="height: 100%;">
+                                    <div class="card-header">
+                                        <h5 class="card-title">
+                                            <%= message.email %>
+                                        </h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <h6 class="card-subtitle mb-2"> <strong>Subject:</strong>
+                                            <%= message.subject %>
+                                        </h6>
+                                        <p class="card-text">
+                                            <strong>Message:</strong>
+                                            <%= message.message %>
+                                        </p>
+                                        <p class="card-text">
+                                            <strong>Date:</strong>
+                                            <%= message.date %>
+                                        </p>
+                                        <form action="/admin/delete-message/<%= message._id %>" method="post"
+                                            class="delete-message-form mt-3">
+                                            <button type="submit" class="btn btn-danger">Delete</button>
+                                        </form>
+                                    </div>
+                                </div>
+
+                            </div>
+                            <% }); %>
+                                <% } else { %>
+                                    <p class="alert alert-warning mt-3 text-center">No messages to show</p>
+                                    <% } %>
+                </div>
+            </div>
+
+            <%- include("partials/scripts") %>
+
+            
+                <script>
+                    document.querySelectorAll(".delete-message-form").forEach(form => {
+                        form.addEventListener("submit", function (e) {
+                            e.preventDefault();
+                            Swal.fire({
+                                title: 'Are you sure?',
+                                text: "This message will be permanently deleted!",
+                                icon: 'warning',
+                                showCancelButton: true,
+                                confirmButtonColor: '#d33',
+                                cancelButtonColor: '#3085d6',
+                                confirmButtonText: 'Yes, delete it!',
+                                cancelButtonText: 'Cancel'
+                            }).then((result) => {
+                                if (result.isConfirmed) {
+                                    form.submit();
+                                }
+                            });
+                        });
+                    });
+                </script>
+    </body>
+
+    </html>

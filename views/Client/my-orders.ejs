@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Your Orders - Truck Haulers</title>
+  <%- include("partials/head") %>
+
+    <!-- SweetAlert2 CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+
+<%- include("partials/style") %>
+
+  <body class="bg-light">
+
+    <%- include("partials/preLoader") %>
+      <%- include("partials/navbar") %>
+
+        <div class="container py-5 mt-2">
+          <h2 class="text-center mb-5 fw-bold text-dark">🛒 Your <span class="highlight">Orders</span></h2>
+
+          <% if (orders.length> 0) { %>
+            <div class="row g-4">
+              <% orders.forEach(order=> { %>
+                <div class="col-md-6 col-lg-4">
+                  <div class="card h-100 shadow border-3">
+                    <div class="card-header fw-bold d-flex justify-content-between align-items-center">
+                      <small>Order #<%= order._id %></small>
+                      <small>
+                        <%= new Date(order.orderDate).toLocaleDateString() %>
+                      </small>
+                    </div>
+
+                    <div class="card-body">
+                      <% order.items.forEach(item=> { %>
+                        <% if (item.product) { %>
+                          <div class="d-flex align-items-center mb-3">
+                            <img src="<%= item.product.productImages[0] %>" alt="Product Image" class="rounded me-3"
+                              style="width: 60px; height: 60px; object-fit: cover;">
+                            <div>
+                              <h6 class="mb-1 fw-semibold">
+                                <%= item.product.name %>
+                              </h6>
+                              <small>₹<%= item.product.price %> × <%= item.quantity %></small>
+                            </div>
+                          </div>
+                          <% } else { %>
+                            <div class="d-flex align-items-center mb-3 text-danger">
+                              Product not available
+                            </div>
+                            <% } %>
+                              <% }) %>
+
+                                <div class="border-top pt-3 mt-3">
+                                  <div class="d-flex justify-content-between mb-2">
+                                    <span class="fw-bold">Total:</span>
+                                    <span class="fw-bold">₹<%= order.totalAmount %></span>
+                                  </div>
+
+                                  <div class="d-flex justify-content-between align-items-center mt-2">
+                                    <span
+                                      class="badge rounded-pill bg-<%= order.status === 'canceled' ? 'danger' : 'success' %> text-capitalize">
+                                      <%= order.status %>
+                                    </span>
+
+                                    <form action="/cancel-order/<%= order._id %>" method="POST"
+                                      class="ms-2 cancel-form">
+                                      <button type="submit" class="btn btn-sm btn-outline-light bg-danger"
+                                        <%=order.status==='canceled' ? 'disabled' : '' %>>
+                                        <%= order.status==='canceled' ? 'Canceled' : 'Cancel' %>
+                                      </button>
+                                    </form>
+                                  </div>
+                                </div>
+                    </div>
+                  </div>
+                </div>
+                <% }) %>
+            </div>
+
+            <% } else { %>
+              <div class="alert alert-warning text-center mt-5 shadow-sm">
+                <h5>No orders yet!</h5>
+                <a href="/products" class="btn btn-primary mt-3">Start Shopping</a>
+              </div>
+              <% } %>
+        </div>
+
+        <%- include("partials/footer") %>
+          <%- include("partials/scripts") %>
+
+            <!-- SweetAlert Confirmation Script -->
+            <script>
+              document.querySelectorAll('.cancel-form').forEach(form => {
+                form.addEventListener('submit', function (e) {
+                  e.preventDefault();
+                  Swal.fire({
+                    title: 'Are you sure?',
+                    text: "Do you really want to cancel this order?",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#d33',
+                    cancelButtonColor: '#3085d6',
+                    confirmButtonText: 'Yes, cancel it!',
+                    reverseButtons: true
+                  }).then((result) => {
+                    if (result.isConfirmed) {
+                      form.submit();
+                    }
+                  });
+                });
+              });
+            </script>
+
+  </body>
+
+</html>

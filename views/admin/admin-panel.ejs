@@ -1,0 +1,114 @@
+<%- include("partials/head") %>
+
+    <body>
+
+        <%- include("partials/navbar") %>
+
+            <div class="container p-4">
+                <h2>Welcome, Admin</h2>
+                <div class="row mb-4">
+                    <div class="col-md-3">
+                        <div class="card p-3 shadow">
+                            <h5>Total Products</h5>
+                            <p>
+                                <%= totalProducts %>
+                            </p>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card p-3 shadow">
+                            <h5>Total Users</h5>
+                            <p>
+                                <%= totalUsers %>
+                            </p>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card p-3 shadow">
+                            <h5>Total Orders</h5>
+                            <p>
+                                <%= totalOrders %>
+                            </p>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card p-3 shadow">
+                            <h5>Total Revenue</h5>
+                            <p>Rs. <%= totalRevenue %>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <div class="card shadow">
+                            <div class="card-header">
+                                <h5>Recent Activity</h5>
+                            </div>
+                            <div class="card-body">
+                                <ul class="recent-activity">
+                                    <% if (latestUser) { %>
+                                        <li>New user registered: <%= latestUser.name %>
+                                        </li>
+                                        <% } else { %>
+                                            <li>No recent user registrations.</li>
+                                            <% } %>
+
+                                                <% if (latestProduct) { %>
+                                                    <li>Product "<%= latestProduct.name %>" added to inventory</li>
+                                                    <% } else { %>
+                                                        <li>No recent products added.</li>
+                                                        <% } %>
+
+                                                            <% if (latestOrder) { %>
+                                                                <li>Order #<%= totalOrders %> placed by <%=
+                                                                            latestOrder.user?.name || "Unknown" %>
+                                                                </li>
+                                                                <% } else { %>
+                                                                    <li>No recent orders placed.</li>
+                                                                    <% } %>
+
+                                                                        <li>Shipped Orders: <%= latestShipped %>
+                                                                        </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="card p-3 shadow">
+                            <h5>Analytics</h5>
+                            <p>Graph Placeholder</p>
+                            <div style="height: 200px; background-color: #000000;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="card p-3 shadow">
+                            <h5>Manage Users</h5>
+                            <a href="/admin/manage-users" class="btn btn-primary">Go to Users</a>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card p-3 shadow">
+                            <h5>Manage Products</h5>
+                            <a href="/admin/manage-products" class="btn btn-primary">Go to Products</a>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card p-3 shadow">
+                            <h5>View Orders</h5>
+                            <a href="/admin/manage-orders" class="btn btn-primary">Go to Orders</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <%- include("partials/scripts") %>
+
+    </body>
+
+    </html>

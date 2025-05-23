@@ -1,0 +1,96 @@
+<%- include("partials/head") %>
+
+  <body>
+    <%- include("partials/navbar") %>
+
+      <div class="container-fluid my-4">
+        <h2>Manage Orders</h2>
+        <div class="table-responsive">
+          <% if (orders.length> 0) { %>
+            <table class="table table-striped fw-bold border-2 border-dark">
+              <thead>
+                <tr class="text-white bg-black">
+                  <th scope="col">Order ID</th>
+                  <th scope="col">Customer Name</th>
+                  <th scope="col">Email</th>
+                  <th scope="col">Order Date</th>
+                  <th scope="col">Status</th>
+                  <th scope="col">Total</th>
+                  <th scope="col">Actions</th>
+                  <th scope="col"></th>
+                </tr>
+              </thead>
+
+              <tbody>
+                <% orders.forEach(order=> { %>
+                  <tr>
+                    <td>
+                      <%= order._id %>
+                    </td>
+                    <td>
+                      <%= order.user ? order.user.name : "Unknown User" %>
+                    </td>
+                    <td>
+                      <%= order.user ? order.user.email : "Unknown Email" %>
+                    </td>
+                    <td>
+                      <%= new Date(order.orderDate).toLocaleDateString() %>
+                    </td>
+                    <td>
+                      <form action="/admin/update-order-status/<%= order._id %>" method="post">
+                        <select class="form-select form-select-sm" name="orderStatus">
+                          <option value="pending" <%=order.status==="pending" ? "selected" : "" %>>Pending</option>
+                          <option value="shipped" <%=order.status==="shipped" ? "selected" : "" %>>Shipped</option>
+                          <option value="delivered" <%=order.status==="delivered" ? "selected" : "" %>>Delivered
+                          </option>
+                          <option value="canceled" <%=order.status==="canceled" ? "selected" : "" %>>Canceled</option>
+                        </select>
+                        <button type="submit" class="btn bg-success text-light mt-2 btn-sm">Update</button>
+                      </form>
+                    </td>
+                    <td>₹ <%= order.totalAmount %>
+                    </td>
+                    <td>
+                      <a href="/admin/view-user-order/<%= order._id %>" class="btn btn-primary btn-sm">View</a>
+                    </td>
+                    <td>
+                      <form action="/admin/delete-order/<%= order._id %>" method="post" class="delete-order-form">
+                        <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                      </form>
+                    </td>
+                  </tr>
+                  <% }) %>
+              </tbody>
+            </table>
+            <% } else { %>
+              <div class="alert alert-warning text-center mt-5">No items found in manage orders</div>
+              <% } %>
+        </div>
+      </div>
+
+      <%- include("partials/scripts") %>
+        <script>
+          document.querySelectorAll('.delete-order-form').forEach(form => {
+            form.addEventListener('submit', function (e) {
+              e.preventDefault();
+
+              Swal.fire({
+                title: 'Are you sure?',
+                text: "This order will be permanently deleted!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Yes, delete it!',
+                cancelButtonText: 'Cancel'
+              }).then((result) => {
+                if (result.isConfirmed) {
+                  form.submit();
+                }
+              });
+            });
+          });
+        </script>
+  </body>
+
+  </html>
