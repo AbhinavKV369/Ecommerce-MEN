@@ -72,7 +72,7 @@ router.post("/manage-coupons",handleCreateCoupon);
 
 router.post("/coupons/toggle/:id",handleToggleCouponStatus);
 router.get("/coupons/delete/:id",handleDeleteCoupon);
-router.post("/coupons/search", handleSearchCoupons);
+router.post("/manage-coupons/search", handleSearchCoupons);
 router.get("/add-banner", handleGetAddBanner);
 router.post("/add-banner", upload.single("bannerImage"), handlePostAddBanner);
 

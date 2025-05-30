@@ -5,34 +5,30 @@ const jwt = require("jsonwebtoken");
 const { hashTheValue, compareTheValue } = require("../services/hashing");
 const { generateOTP, sendOTP } = require("../services/nodeMailer");
 const secret = process.env.JWT_SECRET;
+// POST: Register
 
 async function handlePostRegister(req, res) {
   const { name, phone, email, password } = req.body;
-
   if (!name || !phone || !email || !password) {
-    return res.status(400).render("client/register", {
-      message: "All fields are required",
-      formData: req.body,
-    });
+    req.flash("error", "All fields are required");
+    return res.redirect("/register");
   }
 
   try {
     const existingUser = await User.findOne({ email });
     if (existingUser) {
-      return res.status(400).render("client/register", {
-        message: "User already exists",
-        formData: req.body,
-      });
+      req.flash("error", "User already exists");
+      return res.redirect("/register");
     }
 
     const passwordRegex =
       /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
     if (!passwordRegex.test(password)) {
-      return res.status(400).render("client/register", {
-        message:
-          "Password must be at least 8 characters long, contain one letter, one number, and one special character.",
-        formData: req.body,
-      });
+      req.flash(
+        "error",
+        "Password must be at least 8 characters long, contain one letter, one number, and one special character."
+      );
+      return res.redirect("/register");
     }
 
     const hashedPassword = await hashTheValue(password, 12);
@@ -58,15 +54,11 @@ async function handlePostRegister(req, res) {
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
-    return res.status(201).render("client/verify-otp", {
-      formData: req.body,
-      email,
-      message: "OTP sent to your email",
-    });
+    req.flash("success", "OTP sent to your email");
+    return res.redirect(`/verify-otp?email=${encodeURIComponent(email)}`);
   } catch (error) {
-    res.status(400).render("client/server-error", {
-      message: error.message,
-    });
+    req.flash("error", error.message);
+    return res.redirect("/register");
   }
 }
 
@@ -76,19 +68,13 @@ async function handlePostOtp(req, res) {
     const user = await User.findOne({ email });
 
     if (!user) {
-      return res.status(400).render("client/verify-otp", {
-        message: "User not found",
-        email,
-        formData: req.body,
-      });
+      req.flash("error", "User not found");
+      return res.redirect(`/verify-otp?email=${encodeURIComponent(email)}`);
     }
 
     if (user.otp !== otp || user.otpExpires < Date.now()) {
-      return res.status(400).render("client/verify-otp", {
-        email,
-        message: "Invalid OTP or OTP expired",
-        formData: req.body,
-      });
+      req.flash("error", "Invalid OTP or OTP expired");
+      return res.redirect(`/verify-otp?email=${encodeURIComponent(email)}`);
     }
 
     user.isVerified = true;
@@ -97,46 +83,37 @@ async function handlePostOtp(req, res) {
     user.otpExpires = undefined;
     await user.save();
 
-    res.redirect("/")
+    req.flash("success", `OTP verified successfully, welcome ${user.name}`);
+    return res.redirect("/");
   } catch (error) {
-    return res.render("client/server-error", {
-      message: error.message,
-    });
+    req.flash("error", error.message);
+    return res.redirect(`/verify-otp?email=${encodeURIComponent(email)}`);
   }
 }
 
 async function handlePostLogin(req, res) {
   const { email, password } = req.body;
   if (!email || !password) {
-    return res.status(400).render("client/login", {
-      message: "All fields are required",
-      formData: req.body,
-    });
+    req.flash("error", "All fields are required");
+    return res.redirect("/login");
   }
+
   try {
     const user = await User.findOne({ email });
-
     if (!user) {
-      return res.status(400).render("client/login", {
-        message: "User not found",
-      });
+      req.flash("error", "User not found");
+      return res.redirect("/login");
     }
 
     const isPasswordMatch = await compareTheValue(password, user.password);
     if (!isPasswordMatch) {
-      return res.status(400).render("client/login", {
-        message: "Incorrect Password",
-        formBody: req.body,
-      });
+      req.flash("error", "Incorrect password");
+      return res.redirect("/login");
     }
 
-    const payload = {
-      user: {
-        id: user.id,
-      },
-    };
-
+    const payload = { user: { id: user.id } };
     const token = jwt.sign(payload, secret, { expiresIn: "7d" });
+
     res.cookie("token", token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
@@ -144,36 +121,35 @@ async function handlePostLogin(req, res) {
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
-    res.status(200).redirect("/");
+    req.flash("success", `Login successful, welcome ${user.name}`);
+    return res.redirect("/");
   } catch (error) {
-    res.status(400).render("client/server-error", {
-      message: error.message,
-    });
-  } 
+    req.flash("error", error.message);
+    return res.redirect("/login");
+  }
 }
 
-async function handlePostForgotPassword(req,res) {
-  const { email } = req.body
-  try{
-    const resetOtp = generateOTP() ;
+async function handlePostForgotPassword(req, res) {
+  const { email } = req.body;
+  try {
+    const resetOtp = generateOTP();
+    const user = await User.findOne({ email });
 
-    const user = await User.findOne({email});
+    if (!user) {
+      req.flash("error", "User not found");
+      return res.redirect("/forgot-password");
+    }
 
     user.resetOtp = resetOtp;
-    user. resetOtpExpires =  Date.now() + 5 * 60 * 1000 ;
-    await user.save()
+    user.resetOtpExpires = Date.now() + 5 * 60 * 1000;
+    await user.save();
+    await sendOTP(email, resetOtp);
 
-    await sendOTP(email,resetOtp);
-
-    res.status(200).render("client/reset-otp",{
-      email,
-      message: "OTP send to email,please verify"
-    })
-
-  }catch(error){
-    res.render("client/server-error", {
-      message: error.message,
-    });
+    req.flash("success", "OTP sent to email, please verify");
+    return res.redirect(`/reset-otp?email=${encodeURIComponent(email)}`);
+  } catch (error) {
+    req.flash("error", error.message);
+    return res.redirect("/forgot-password");
   }
 }
 
@@ -181,22 +157,16 @@ async function handlePostResetOtp(req, res) {
   const { email, otp } = req.body;
   try {
     const user = await User.findOne({ email });
-
     if (!user || user.resetOtp !== otp || user.resetOtpExpires < Date.now()) {
-      return res.status(400).render("client/reset-otp", {
-        message: "Invalid or expired OTP",
-        email,
-      });
+      req.flash("error", "Invalid or expired OTP");
+      return res.redirect(`/reset-otp?email=${encodeURIComponent(email)}`);
     }
 
-    res.status(200).render("client/reset-password", {
-      email,
-      message: "OTP verified, now reset your password",
-    });
+    req.flash("success", "OTP verified, now reset your password");
+    return res.redirect(`/reset-password?email=${encodeURIComponent(email)}`);
   } catch (error) {
-    res.render("client/server-error", {
-      message: error.message,
-    });
+    req.flash("error", error.message);
+    return res.redirect(`/reset-otp?email=${encodeURIComponent(email)}`);
   }
 }
 
@@ -204,77 +174,58 @@ async function handlePostResetPassword(req, res) {
   const { email, newPassword, confirmPassword } = req.body;
 
   if (!newPassword || !confirmPassword) {
-    return res.status(400).render("client/reset-password", {
-      message: "All fields are required",
-      email,
-    });
+    req.flash("error", "All fields are required");
+    return res.redirect(`/reset-password?email=${encodeURIComponent(email)}`);
   }
 
   if (newPassword !== confirmPassword) {
-    return res.status(400).render("client/reset-password", {
-      message: "Passwords do not match",
-      email,
-    });
+    req.flash("error", "Passwords do not match");
+    return res.redirect(`/reset-password?email=${encodeURIComponent(email)}`);
   }
 
   const passwordRegex =
     /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
   if (!passwordRegex.test(newPassword)) {
-    return res.status(400).render("client/reset-password", {
-      message:
-        "Password must be at least 8 characters long, contain one letter, one number, and one special character.",
-      email,
-    });
+    req.flash(
+      "error",
+      "Password must be at least 8 characters long, contain one letter, one number, and one special character."
+    );
+    return res.redirect(`/reset-password?email=${encodeURIComponent(email)}`);
   }
 
   try {
     const user = await User.findOne({ email });
     if (!user) {
-      return res.status(404).render("client/reset-password", {
-        message: "User not found",
-        email,
-      });
+      req.flash("error", "User not found");
+      return res.redirect(`/reset-password?email=${encodeURIComponent(email)}`);
     }
 
     const hashedPassword = await hashTheValue(newPassword, 12);
     user.password = hashedPassword;
-
     user.resetOtp = undefined;
     user.resetOtpExpires = undefined;
-
     await user.save();
 
-    res.status(200).render("client/login",{
-      message: "Password changed successfully"
-    });
+    req.flash("success", "Password changed successfully");
+    return res.redirect("/login");
   } catch (error) {
-    res.status(500).render("client/server-error", {
-      message: error.message,
-    });
+    req.flash("error", error.message);
+    return res.redirect(`/reset-password?email=${encodeURIComponent(email)}`);
   }
 }
 
 async function handlePostEditProfile(req, res) {
   try {
     const { name, phone, email } = req.body;
-
     const updatedFields = { name, phone, email };
-    const user = await User.findByIdAndUpdate(req.user.id, updatedFields, {
-      new: true,
-    });
+    await User.findByIdAndUpdate(req.user.id, updatedFields, { new: true });
 
-    res.render("client/edit-profile", {
-      user,
-      message: "Profile updated successfully",
-    });
-
+    req.flash("success", "Profile updated successfully");
+    return res.redirect("/edit-profile");
   } catch (error) {
     console.error("Edit profile error:", error);
-    res.render("client/edit-profile", {
-      user: req.body,
-      message: error.message || "Something went wrong",
-      addresses: req.body.addresses || [],
-    });
+    req.flash("error", error.message || "Something went wrong");
+    return res.redirect("/edit-profile");
   }
 }
 
@@ -283,17 +234,17 @@ async function handleGetEditProfile(req, res) {
     const user = await User.findById(req.user.id);
 
     if (!user) {
-      return res.json({ message: "User not found" });
+      req.flash("error", "User not found");
+      return res.redirect("/user-dashboard");
     }
 
     res.render("client/edit-profile", {
       user,
-      message: null,
+      messages: res.locals.messages,
     });
   } catch (error) {
-    res.render("client/edit-profile", {
-      message: error.message,
-    });
+    req.flash("error", error.message);
+    return res.redirect("/user-dashboard");
   }
 }
 
@@ -302,218 +253,239 @@ async function handleGetAddAddress(req, res) {
     const user = await User.findById(req.user.id);
     res.status(200).render("client/add-addresses", {
       user,
-      addresses: user.addresses, 
+      addresses: user.addresses,
+      messages: res.locals.messages,
     });
   } catch (error) {
-    res.render("client/edit-profile", {
-      message: error.message,
-    });
+    req.flash("error", error.message);
+    return res.redirect("/edit-profile");
   }
 }
 
-async function handlePostAddAddress(req,res) {
+async function handlePostAddAddress(req, res) {
+  const { addresses } = req.body;
+  try {
+    const newAddress = { ...addresses };
 
-  const {addresses} = req.body;
-  try{
-
-    const newAddresses = {...addresses}
     await User.findByIdAndUpdate(
       req.user.id,
-      {$push:{addresses:newAddresses}},
-      {new:true}
+      { $push: { addresses: newAddress } },
+      { new: true }
     );
 
-    res.redirect("/edit-profile");
-    
-  }catch(error){
-    res.status(500).render("client/server-error", {
-      message: error.message,
-    });
+    req.flash("success", "Address added successfully");
+    return res.redirect("/edit-profile");
+  } catch (error) {
+    req.flash("error", error.message);
+    return res.redirect("/edit-profile");
   }
 }
 
-async function handlePostDeleteAddress(req,res) {
-  try{
-    const user = req.user.id;
-    const address = req.params.id;
-   await User.findByIdAndUpdate(
-    user,
-    {$pull:{ addresses:{ _id: address }}},
-    {new:true}
-   )
-  res.redirect("/edit-profile");
-  }catch(error){
-    res.render("client/edit-profile", {
-      message: error.message,
-    });
+async function handlePostDeleteAddress(req, res) {
+  try {
+    const userId = req.user.id;
+    const addressId = req.params.id;
+
+    await User.findByIdAndUpdate(
+      userId,
+      { $pull: { addresses: { _id: addressId } } },
+      { new: true }
+    );
+
+    req.flash("success", "Address deleted successfully");
+    return res.redirect("/edit-profile");
+  } catch (error) {
+    req.flash("error", error.message);
+    return res.redirect("/edit-profile");
   }
 }
-
 async function handlePostChangePassword(req, res) {
-  const { password, newPassword, confirmNewPassword } = req.body;
+  const { currentPassword, newPassword, confirmNewPassword } = req.body;
 
   try {
-    if (newPassword !== confirmNewPassword) {
-      return res.status(400).render("client/change-password", {
-        message: "New passwords do not match",
-        formData: req.body,
-      });
-    }
-
-    const user = await User.findById(req.user.id);
-
+    const user = await User.findById(req.user.id).select("+password");
     if (!user) {
-      return res.status(404).render("client/change-password", {
-        user,
-        message: "User not found",
-        formData: req.body,
-      });
+      req.flash("error", "User not found");
+      return res.redirect("/change-password");
     }
 
-    const isPasswordMatch = await compareTheValue(password, user.password);
-    if (!isPasswordMatch) {
-      return res.status(400).render("client/change-password", {
-        user,
-        message: "Old password is incorrect",
-        formData: req.body,
-      });
+    const isMatch = await compareTheValue(currentPassword, user.password);
+    if (!isMatch) {
+      req.flash("error", "Current password is incorrect");
+      return res.redirect("/change-password");
+    }
+
+    if (currentPassword === newPassword) {
+      req.flash("error", "New password cannot be the same as the current password");
+      return res.redirect("/change-password");
     }
 
     const passwordRegex =
       /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
     if (!passwordRegex.test(newPassword)) {
-      return res.status(400).render("client/change-password", {
-        message:
-          "New password must be at least 8 characters long, contain one letter, one number, and one special character.",
-        formData: req.body,
-      });
+      req.flash(
+        "error",
+        "New password must be at least 8 characters, include a letter, a number, and a special character."
+      );
+      return res.redirect("/change-password");
     }
 
-    const hashedPassword = await hashTheValue(newPassword, 12);
-    user.password = hashedPassword;
+    if (newPassword !== confirmNewPassword) {
+      req.flash("error", "New passwords do not match");
+      return res.redirect("/change-password");
+    }
+
+    const hashedNewPassword = await hashTheValue(newPassword, 12);
+    user.password = hashedNewPassword;
     await user.save();
 
-    return res.status(200).render("client/home", {
-      message: "Password changed successfully",
-    });
+    req.flash("success", "Password changed successfully");
+    return res.redirect("/user-dashboard");
   } catch (error) {
-    console.error(error);
-    return res.status(500).render("client/server-error", {
-      message: "An unexpected error occurred: " + error.message,
-    });
+    console.error("Password change error:", error);
+    req.flash("error", "Something went wrong. Please try again.");
+    return res.redirect("/change-password");
   }
 }
+
+async function handleLogout(req, res) {
+  res.clearCookie("token");
+  req.flash("success", "Logged out successfully");
+  return res.redirect("/login");
+}
+
 
 async function handleSubmitMessage(req, res) {
   try {
     const { name, email, subject, message } = req.body;
 
     if (!name || !email || !subject || !message) {
-      return res.status(400).render("client/contact", {
-        message: "All fields are required.",
-      });
+      req.flash('error', 'All fields are required.');
+      return res.redirect('/contact');  
     }
 
-    const newMessage = new Message({
-      name,
-      email,
-      subject,
-      message,
-    });
-
+    const newMessage = new Message({ name, email, subject, message });
     await newMessage.save();
-    res.json({success: true})
+
+    req.flash('success', 'Message sent successfully!');
+    res.redirect('/contact');
   } catch (error) {
-    res.status(500).render("client/server-error", {
-      message: error.message,
-    });
+    req.flash('error', 'Server error: ' + error.message);
+    res.redirect('/contact');
   }
 }
 
 async function handleLogout(req, res) {
   try {
-    res.clearCookie("token", { httpOnly: true });
-    res.redirect("/");
+    res.clearCookie('token', { httpOnly: true });
+    req.flash('success', 'You have logged out successfully.');
+    res.redirect('/');
   } catch (error) {
-    res.status(500).render("client/server-error", {
-      message: error.message,
-    });
+    req.flash('error', 'Server error: ' + error.message);
+    res.redirect('/user-dashboard');
   }
 }
 
 async function handleDeleteAccount(req, res) {
-  await User.findByIdAndDelete(req.user.id);
+  try {
+    await User.findByIdAndDelete(req.user.id);
+    res.clearCookie('token');
 
-  res.clearCookie("token");
-
-  res.render("client/home", {
-    message: "Account deletion successfull",
-  });
+    req.flash('success', 'Account deletion successful');
+    res.redirect('/');
+  } catch (error) {
+    req.flash('error', 'Error deleting account: ' + error.message);
+    res.redirect('/user-dashboard');
+  }
 }
 
 async function handleGetOffers(req, res) {
   try {
-      const coupons = await Coupon.find({ isActive: true, expiryDate: { $gte: new Date() } }).sort({ expiryDate: 1 });
-      res.render('client/coupons', { coupons });
+    const coupons = await Coupon.find({ 
+      isActive: true, 
+      expiryDate: { $gte: new Date() } 
+    }).sort({ expiryDate: 1 });
+
+    res.render('client/coupons', { coupons });
   } catch (error) {
-      console.error(error);
-      res.status(500).send('Something went wrong.');
+    req.flash('error', 'Something went wrong.');
+    res.redirect('/');
   }
-};
+}
 
 async function handleGetHome(req, res) {
-  res.render("client/home", {
-    message: null,
-  });
+  res.render("client/home");
 }
 
 async function handleGetRegister(req, res) {
   res.render("client/register", {
-    message: null,
     formData: {},
   });
 }
 
 async function handleGetOtp(req, res) {
+  const email = req.query.email;
+
+  if (!email) {
+    req.flash("error", "Invalid request");
+    return res.redirect("/register");
+  }
+
   res.render("client/verify-otp", {
-    message: null,
+    email,
     formData: {},
   });
 }
 
 async function handleGetLogin(req, res) {
   res.render("client/login", {
-    message: null,
+    formData: {},
+  });
+}
+
+async function handleGetForgotPassword(req, res) {
+  res.status(200).render("client/forgot-password", {
     formData: {},
   });
 }
 
 async function handleGetResetOtp(req, res) {
+  const email = req.query.email;
+
+  if (!email) {
+    req.flash("error", "Invalid request");
+    return res.redirect("/forgot-password");
+  }
+
   res.render("client/reset-otp", {
-    message: null,
-    formData: {},
-  });
-}
-
-async function handleGetForgotPassword(req,res){
-  res.status(201).render("client/forgot-password",{
-    message: null,
+    email,
     formData: {},
   });
 }
 
 
-async function handleGetUserDashboard(req, res) {
-  res.render("client/user-dashboard");
+async function handleGetResetPassword(req, res) {
+  const email = req.query.email
+  res.render("client/reset-password",{
+    email
+  });
 }
 
 async function handleGetChangePassword(req, res) {
-  const user = await User.findById({ _id: req.user.id });
-  res.render("client/change-password", {
-    user,
-    message: null,
-    formData: {},
-  });
+  try {
+    const user = await User.findById(req.user.id);
+    res.render("client/change-password", {
+      user,
+      formData: {},
+    });
+  } catch (error) {
+    req.flash("error", "Failed to load change password page");
+    res.redirect("/user-dashboard");
+  }
+}
+
+async function handleGetUserDashboard(req, res) {
+  res.render("client/user-dashboard");
 }
 
 async function handleGetServerError(req, res) {
@@ -542,6 +514,7 @@ module.exports = {
   handleGetLogin,
   handleGetForgotPassword,
   handleGetResetOtp,
+  handleGetResetPassword,
   handleGetUserDashboard,
   handleGetEditProfile,
   handleGetAddAddress,

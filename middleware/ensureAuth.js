@@ -1,7 +1,8 @@
 function ensureAuthenticated(req, res, next) {
-    if (!req.user) return res.render('client/login',{
-      message: "You need to login first"
-    });
+    if (!req.user) {
+      req.flash('error',"You need to login first")
+      return res.redirect('/login');
+    }
     next();
   }
 

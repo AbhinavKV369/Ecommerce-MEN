@@ -10,26 +10,38 @@ async function handleGetHome(req,res) {
 }
 
 async function handleGetProducts(req, res) {
-  try {  
-    
-    const products = await Product.find({});
-    if(req.user){
-      const wishlist = await Wishlist.findOne({ user: req.user.id }).populate("items.product");
-      return res.render("client/products", {
-        products,
-        wishlist ,
-      });
+  const { search = "", category = "", sortBy = "" } = req.query;
+
+  const filter = {
+    name: { $regex: search, $options: "i" },
+    category: { $regex: category, $options: "i" }
+  };
+
+  const sort = sortBy === "low-to-high" ? { price: 1 } :
+               sortBy === "high-to-low" ? { price: -1 } :
+               {};
+
+  try {
+    const products = await Product.find(filter).sort(sort).lean();
+
+    let wishlist = null;
+    if (req.user) {
+      wishlist = await Wishlist.findOne({ user: req.user.id }).populate("items.product").lean();
+      if (wishlist) {
+        wishlist.items = wishlist.items.filter(item => item.product);
+      }
     }
-    const wishlist = null
-                               
+
     res.render("client/products", {
       products,
-      wishlist
+      wishlist,
+      search,
+      category,
+      sortBy
     });
+
   } catch (error) {
-    res.status(500).render("client/server-error", {
-      message: error.message,
-    });
+    res.status(500).render("client/server-error", { message: error.message });
   }
 }
 
@@ -57,6 +69,7 @@ async function handleGetProductDetails(req, res) {
     });
   }
 }
+
 async function handleFilterProducts(req, res) {
   let { search, category, sortBy } = req.query;
 

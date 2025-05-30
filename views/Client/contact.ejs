@@ -111,53 +111,9 @@
   <%- include("partials/footer") %>
   <%- include("partials/scripts") %>
 
-  <script>
-    document.getElementById('contactForm').addEventListener('submit', function (e) {
-      e.preventDefault();
+ 
 
-      Swal.fire({
-        title: 'Submit your message?',
-        text: "We'll get back to you shortly.",
-        icon: 'question',
-        showCancelButton: true,
-        confirmButtonColor: '#003366',
-        cancelButtonColor: '#aaa',
-        confirmButtonText: 'Yes, submit it!'
-      }).then((result) => {
-        if (result.isConfirmed) {
-          const form = e.target;
-          const formData = {
-            name: form.name.value,
-            email: form.email.value,
-            subject: form.subject.value,
-            message: form.message.value
-          };
-
-          fetch('/submit-message', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(formData)
-          })
-            .then(response => response.json())
-            .then(data => {
-              if (data.success) {
-                Swal.fire('Sent!', 'Your message has been sent.', 'success');
-                form.reset();
-              } else {
-                Swal.fire('Error', data.error || 'Something went wrong.', 'error');
-              }
-            })
-            .catch(error => {
-              console.error('Error:', error);
-              Swal.fire('Error', 'Server error occurred.', 'error');
-            });
-        }
-      });
-    });
-  </script>
-  
+    <%- include("partials/msgFlash") %>
 </body>
 
 </html>

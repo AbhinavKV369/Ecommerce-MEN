@@ -56,7 +56,8 @@
                                             <th>Code</th>
                                             <th>Discount Amount</th>
                                             <th>Expiry Date</th>
-                                            <th>Status</th>
+                                            <th>Used By</th>
+                                            <th>Status</th>                 
                                             <th>Actions</th>
                                         </tr>
                                     </thead>
@@ -79,12 +80,16 @@
                                                                 coupon.expiryDate.toISOString().slice(0, 10) : 'N/A' %>
                                                         </td>
                                                         <td>
+                                                            <span class="badge bg-dark"><%= coupon.usedBy.length  %></span>
+                                                        </td>
+                                                        <td>
                                                             <% if (coupon.isActive) { %>
                                                                 <span class="badge bg-success">Active</span>
                                                                 <% } else { %>
                                                                     <span class="badge bg-secondary">Inactive</span>
                                                                     <% } %>
                                                         </td>
+                                                      
                                                         <td>
                                                             <form action="/admin/coupons/toggle/<%= coupon._id %>"
                                                                 method="POST" style="display:inline-block;">

@@ -3,7 +3,6 @@ const express = require("express");
 const {
   handleGetHome,
   handleGetProducts,
-  handleFilterProducts,
   handleGetProductDetails,
   handleGetBuses,
   handleGetTrucks,
@@ -19,7 +18,6 @@ const router = express.Router();
 
 router.get("/", handleGetHome);
 router.get("/products", handleGetProducts);
-router.get("/products/filter", handleFilterProducts);
 router.get("/view-product/:id", handleGetProductDetails);
 router.get("/buses", handleGetBuses); 
 router.get("/trucks", handleGetTrucks);

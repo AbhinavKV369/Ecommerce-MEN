@@ -12,7 +12,7 @@ async function userAuth(req, res, next) {
 
   try {
     const decoded = jwt.verify(token, secret);
-    const user = await User.findById(decoded.user.id); // Ensure JWT has `.user.id`
+    const user = await User.findById(decoded.user.id); 
     if (!user) {
       res.locals.user = null;
       return next();

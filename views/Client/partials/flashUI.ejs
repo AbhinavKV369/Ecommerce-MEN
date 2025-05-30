@@ -1,0 +1,18 @@
+<!-- notyf-partial.ejs -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.css" />
+<script src="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.js"></script>
+
+<script>
+    const notyf = new Notyf({
+        duration: 3000,
+        position: { x: 'center', y: 'top' }
+    });
+  
+  <% if (messages.success) { %>
+        notyf.success(<%- JSON.stringify(messages.success) %>);
+<% } %>
+
+<% if (messages.error) { %>
+        notyf.error(<%- JSON.stringify(messages.error) %>);
+<% } %>
+</script>

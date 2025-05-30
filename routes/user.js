@@ -26,6 +26,7 @@ const {
   handlePostAddAddress,
   handlePostDeleteAddress,
   handleGetOffers,
+  handleGetResetPassword,
 } = require("../controllers/user");
 
 
@@ -50,6 +51,7 @@ router.get("/verify-otp", handleGetOtp);
 router.get("/login", handleGetLogin);
 router.get("/forgot-password",handleGetForgotPassword);
 router.get("/reset-otp",handleGetResetOtp);
+router.get("/reset-password",handleGetResetPassword);
 router.get("/user-dashboard", handleGetUserDashboard);
 router.get("/edit-profile",  handleGetEditProfile);
 router.get("/add-address",handleGetAddAddress);

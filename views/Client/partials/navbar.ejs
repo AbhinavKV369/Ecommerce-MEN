@@ -22,7 +22,7 @@
 
                 <!-- Categories Dropdown -->
                 <li class="nav-item me-3 dropdown">
-                    <a class="nav-link text-dark hover-underline-animation dropdown-toggle" href="#" role="button"
+                    <a class="nav-link dropdown-toggle text-dark hover-underline-animation" href="#" role="button"
                         data-bs-toggle="dropdown" aria-expanded="false">
                         Categories
                     </a>
@@ -36,7 +36,7 @@
 
                 <!-- Info Dropdown -->
                 <li class="nav-item me-3 dropdown">
-                    <a class="nav-link text-dark hover-underline-animation dropdown-toggle" href="#" role="button"
+                    <a class="nav-link dropdown-toggle text-dark hover-underline-animation" href="#" role="button"
                         data-bs-toggle="dropdown" aria-expanded="false">
                         Info
                     </a>
@@ -47,12 +47,14 @@
                     </ul>
                 </li>
 
+                <!-- Offers -->
                 <li class="nav-item me-3">
                     <a class="nav-link position-relative text-dark hover-underline-animation" href="/coupons">
                         <i class="fas fa-tag me-1"></i> Offers
                     </a>
                 </li>
 
+                <!-- Authenticated Users -->
                 <% if (user) { %>
                     <li class="nav-item me-3">
                         <a class="nav-link text-dark hover-underline-animation" href="/user-dashboard">
@@ -63,43 +65,48 @@
                         <a class="nav-link text-dark hover-underline-animation" href="/logout">Logout</a>
                     </li>
                     <li class="nav-item me-3">
-                        <a class="nav-link position-relative text-dark hover-underline-animation" href="/wishlist">
+                        <a class="nav-link position-relative text-dark hover-underline-animation" href="/wishlist"
+                            aria-label="Wishlist">
                             ❤️
                             <span
                                 class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger text-white">
-                                <%= wishlistCount %>
+                                <%= wishlistCount || 0 %>
                             </span>
                         </a>
                     </li>
                     <li class="nav-item me-3">
-                        <a class="nav-link position-relative text-dark hover-underline-animation" href="/cart">
+                        <a class="nav-link position-relative text-dark hover-underline-animation" href="/cart"
+                            aria-label="Cart">
                             🛒 Cart
                             <span
                                 class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger text-white">
-                                <%= cartCount %>
+                                <%= cartCount || 0 %>
                             </span>
                         </a>
                     </li>
                     <% } else { %>
-            
+
+                        <!-- Guest Users -->
                         <li class="nav-item me-3">
                             <a class="nav-link text-dark hover-underline-animation" href="/login">Login</a>
                         </li>
                         <li class="nav-item me-3">
-                            <a class="nav-link position-relative text-dark hover-underline-animation" href="/login">
+                            <a class="nav-link position-relative text-dark hover-underline-animation" href="/wishlist"
+                                aria-label="Wishlist">
                                 ❤️
                                 <span
                                     class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger text-white">
-                                    <%= wishlistCount %>
+                                    <%= wishlistCount || 0 %>
                                 </span>
                             </a>
                         </li>
                         <li class="nav-item me-3">
-                            <a class="nav-link position-relative text-dark hover-underline-animation" href="/login">
+                            <a class="nav-link position-relative text-dark hover-underline-animation" href="/cart"
+                                aria-label="Cart">
                                 🛒 Cart
                                 <span
                                     class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger text-white">
-                                    <%= cartCount %>
+                                    <%= cartCount || 0 %>
                                 </span>
                             </a>
                         </li>
@@ -109,3 +116,4 @@
         </div>
     </div>
 </nav>
+  

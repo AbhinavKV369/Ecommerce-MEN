@@ -5,3 +5,5 @@ how hashing works
 advantage btw bcrypt over crypto
 how to create admin
 lean()
+
+// diffrence in render and redirect //connect flash

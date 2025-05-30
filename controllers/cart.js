@@ -24,6 +24,8 @@ async function handleAddToCart(req, res) {
     }
 
     await cart.save();
+    
+    req.flash('success',"Item added to cart");
     res.redirect("/cart")
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -61,7 +63,7 @@ async function handleIncCartCount(req, res) {
     const subTotal = item.product.price * item.quantity;
     const totalQuantity = cart.items.reduce((sum, item) => sum + item.quantity, 0);
     const total = cart.items.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
-
+   
     res.json({ success: true, subTotal, quantity: item.quantity, total, totalQuantity });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });

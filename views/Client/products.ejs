@@ -8,64 +8,63 @@
     <title>Truck Haulers Products</title>
     <%- include("partials/head") %>
         <%- include("partials/style") %>
-
 </head>
 
 <body>
-  
-        <%- include("partials/navbar") %>
 
-            <div class="container py-5">
-                <h1 class="text-center mb-5 display-4 fw-bold">Truck Haulers Vehicles</h1>
+    <%- include("partials/navbar") %>
 
-                <!-- Filter Form -->
-                <div class="row mb-4">
-                    <form action="/products/filter" method="get">
-                        <div class="row g-3">
-                            <div class="col-md-3">
-                                <input type="text" class="form-control" name="search"
-                                    placeholder="Search for vehicles..." aria-label="Search for vehicles" />
-                            </div>
-                            <div class="col-md-3">
-                                <select name="category" class="form-select" aria-label="Select Category">
-                                    <option value="">Select Category</option>
-                                    <option value="lmv">Light Vehicles</option>
-                                    <option value="mmv">Medium Vehicles</option>
-                                    <option value="truck">Trucks</option>
-                                    <option value="bus">Buses</option>
-                                </select>
-                            </div>
-                            <div class="col-md-3">
-                                <select name="sortBy" class="form-select" aria-label="Sort By">
-                                    <option value="">Sort By</option>
-                                    <option value="low-to-high">Price: Low to High</option>
-                                    <option value="high-to-low">Price: High to Low</option>
-                                </select>
-                            </div>
-                            <div class="col-md-3">
-                                <button type="submit" class="btn btn-primary w-100">Apply Filters</button>
-                            </div>
+        <div class="container py-5">
+            <h1 class="text-center mb-5 display-4 fw-bold">Truck Haulers Vehicles</h1>
+
+            <!-- Filter Form -->
+            <div class="row mb-4">
+                <form id="filterForm" action="/products" method="get">
+                    <div class="row g-3">
+                        <div class="col-md-3">
+                            <input type="text" class="form-control" name="search" placeholder="Search for vehicles..."
+                                aria-label="Search for vehicles" />
                         </div>
-                    </form>
-                </div>
+                        <div class="col-md-3">
+                            <select name="category" class="form-select" aria-label="Select Category">
+                                <option value="">Select Category</option>
+                                <option value="lmv">Light Vehicles</option>
+                                <option value="mmv">Medium Vehicles</option>
+                                <option value="truck">Trucks</option>
+                                <option value="bus">Buses</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <select name="sortBy" class="form-select" aria-label="Sort By">
+                                <option value="">Sort By</option>
+                                <option value="low-to-high">Price: Low to High</option>
+                                <option value="high-to-low">Price: High to Low</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <button type="submit" class="btn btn-primary w-100">Apply Filters</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
 
-                <!-- Product Listing -->
-                <section class="container py-5">
-                    <div class="row g-4">
-                        <% products.forEach(product=> { %>
-                            <div class="col-md-4 mb-4">
-                                <div class="card vehicle-card h-100 position-relative">
+            <section id="productList" class="container py-5">
+                <div class="row g-4">
+                    <% products.forEach(product=> { %>
+                        <div class="col-md-4 mb-4">
+                            <div class="card vehicle-card h-100 position-relative">
 
-                                    <!-- Wishlist Button -->
-                                    <% const isWishlisted=wishlist && wishlist.items.some(item=> item.product._id.toString() === product._id.toString());
-                                        %>
-                                    
-                                        <form action="/wishlist/toggle" method="post" class="wishlist-toggle-form position-absolute top-0 end-0 m-2">
-                                            <input type="hidden" name="product" value="<%= product._id %>" />
-                                            <button type="submit" class="btn btn-sm rounded-circle <%= isWishlisted ? 'btn-danger' : 'btn-light' %>">
-                                                <i class="bi <%= isWishlisted ? 'bi-heart-fill' : 'bi-heart' %>"></i>
-                                            </button>
-                                        </form>
+                                <!-- Wishlist Button -->
+                                <% const isWishlisted=wishlist && wishlist.items.some(item=> item.product._id.toString()
+                                    === product._id.toString()); %>
+                                    <form action="/wishlist/toggle" method="post"
+                                        class="wishlist-toggle-form position-absolute top-0 end-0 m-2">
+                                        <input type="hidden" name="product" value="<%= product._id %>" />
+                                        <button type="submit"
+                                            class="btn btn-sm rounded-circle <%= isWishlisted ? 'btn-danger' : 'btn-light' %>">
+                                            <i class="bi <%= isWishlisted ? 'bi-heart-fill' : 'bi-heart' %>"></i>
+                                        </button>
+                                    </form>
 
                                     <!-- Product Image -->
                                     <img src="<%= product.productImages[0] %>" alt="<%= product.name %>"
@@ -93,16 +92,51 @@
                                         </div>
                                     </div>
 
-                                </div>
                             </div>
-                            <% }) %>
-                    </div>
-                </section>
-            </div>
+                        </div>
+                        <% }) %>
+                </div>
+            </section>
+        </div>
 
-            <%- include("partials/scrollUp") %>
-                <%- include("partials/footer") %>
-                    <%- include("partials/scripts") %>
+        <%- include("partials/scrollUp") %>
+            <%- include("partials/footer") %>
+                <%- include("partials/scripts") %>
+                    <%- include("partials/FlashUI") %>
+
+                        <script>
+                            document.getElementById("filterForm").addEventListener("submit", async function (e) {
+                                e.preventDefault();
+
+                                const form = e.target;
+                                const formData = new URLSearchParams(new FormData(form));
+
+                                try {
+                                    const res = await fetch(form.action + "?" + formData.toString(), {
+                                        headers: {
+                                            "X-Requested-With": "XMLHttpRequest"
+                                        }
+                                    });
+
+                                    if (res.ok) {
+                                        const html = await res.text();
+                                        const temp = document.createElement("div");
+                                        temp.innerHTML = html;
+
+                                        const newContent = temp.querySelector("#productList");
+                                        const productList = document.getElementById("productList");
+                                        if (newContent && productList) {
+                                            productList.innerHTML = newContent.innerHTML;
+                                        }
+                                    } else {
+                                        console.error("Failed to load products.");
+                                    }
+                                } catch (err) {
+                                    console.error("AJAX error:", err);
+                                }
+                            });
+                        </script>
+
 </body>
 
 </html>

@@ -51,7 +51,7 @@ const orderSchema = new mongoose.Schema({
   },
   paymentMethod: {
     type: String,
-    enum: ["cod", "online"],
+    enum: ["cod", "paypal" , "stripe" , "razorpay"],
     required: true,
   },
   paymentStatus: {

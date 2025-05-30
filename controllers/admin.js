@@ -10,7 +10,6 @@ const Coupon = require("../models/coupon")
 const Cart = require("../models/cart");
 const Wishlist = require("../models/wishlist");
 
-
 async function createDefaultAdmin() {
   try {
     const existingAdmin = await User.findOne({ role: process.env.ADMIN_NAME });
@@ -74,7 +73,6 @@ async function handlePostAdminLogin(req, res) {
     res.status(500).render("admin/admin-login", { message: "Something went wrong" });
   }
 }
-
 
 async function handleGetAdminPanel(req, res) {
   try {

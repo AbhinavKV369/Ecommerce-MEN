@@ -44,17 +44,7 @@
                 <% products.forEach(product=> { %>
                     <div class="col-md-4 mb-4">
                         <div class="card vehicle-card h-100 position-relative">
-                            <!-- Wishlist Button -->
-                            <% const isWishlisted=wishlist && wishlist.items.some(item=> item.product._id.toString() === product._id.toString());
-                                %>
-                            
-                                <form action="/wishlist/toggle" method="post" class="wishlist-toggle-form position-absolute top-0 end-0 m-2">
-                                    <input type="hidden" name="product" value="<%= product._id %>" />
-                                    <button type="submit" class="btn btn-sm rounded-circle <%= isWishlisted ? 'btn-danger' : 'btn-light' %>">
-                                        <i class="bi <%= isWishlisted ? 'bi-heart-fill' : 'bi-heart' %>"></i>
-                                    </button>
-                                </form>
-        
+                  
                             <!-- Product Image -->
                             <img src="<%= product.productImages[0] %>" alt="<%= product.name %>" class="card-img-top product-img">
         

@@ -15,13 +15,6 @@
 
   <div class="card shadow-sm py-4 py-3" style="width: 100%; max-width: 400px; border-radius: 1rem;">
     <h3 class="text-center mb-4">User Registration</h3>
-
-    <% if (message) { %>
-      <div class="alert alert-danger text-center">
-        <%= message %>
-      </div>
-      <% } %>
-
         <form action="/register" method="POST">
           <div class="mb-3">
             <label for="name" class="form-label">Name</label>
@@ -55,6 +48,7 @@
   </div>
 
   <%- include("partials/scripts") %>
+  <%- include("partials/msgFlash") %>
 </body>
 
 </html>
