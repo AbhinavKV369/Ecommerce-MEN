@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const { applyTimestamps } = require("./user");
 
 const messageSchema = mongoose.Schema({
     name:{
@@ -21,7 +22,7 @@ const messageSchema = mongoose.Schema({
         type: Date,
         default:Date.now
     }
-})
+},{timestamps:true})
 
 const Message = mongoose.model("Message",messageSchema);
 

@@ -1,9 +1,9 @@
 const express = require("express");
 const cookieParser = require("cookie-parser");
 const path = require("path");
-const cors = require("cors");
 const flash = require('connect-flash');
 const session = require("express-session");
+const nocache = require("nocache");
 require("dotenv").config();
 
 const dbConnect = require("./config/dbConnect");
@@ -30,12 +30,13 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(cookieParser());
 app.use(express.static(path.resolve("public")));
-app.use(cors({ credentials: true, origin: true }));
 app.use(session({
   secret: process.env.SESSION_SECRET,
   resave: false,
   saveUninitialized: true,
-}))
+}));
+app.use(nocache());
+
 
 app.set("view engine", "ejs");
 app.set("views", path.resolve("views"));
@@ -54,3 +55,4 @@ app.use("/admin", adminRoutes);
 app.listen(PORT, () => {
   console.log("Server connected at port", PORT);
 });
+

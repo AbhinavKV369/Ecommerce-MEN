@@ -253,39 +253,49 @@
         }
       });
 
-      paypal.Buttons({
-        style: {
-          layout: 'vertical',
-          color: 'blue',
-          shape: 'pill',
-          label: 'pay',
-        },
+      let paypalButtonsInstance = paypal.Buttons({
+          style: {
+            layout: 'vertical',
+            color: 'blue',
+            shape: 'pill',
+            label: 'pay',
+          },
 
-        createOrder: function () {
-          return fetch('/paypal/create', {
-            method: 'post',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-              items: <%- JSON.stringify(cart.items) %>
-          })
-          })
-            .then(res => res.json())
-            .then(data => data.orderID);
-        },
+          createOrder: function () {
+            return fetch('/paypal/create', {
+              method: 'post',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({
+                items: <%- JSON.stringify(cart.items) %>
+        })
+            })
+              .then(res => res.json())
+              .then(data => data.orderID);
+          },
 
-        onApprove: function (data) {
-          paypalOrderIdInput.value = data.orderID;
-          alert('Payment successful! Please click Complete Purchase to finalize your order.');
-        },
+          onApprove: function (data) {
+            paypalOrderIdInput.value = data.orderID;
+            alert('Payment successful! Please click "Complete Purchase" to finalize your order.');
+          },
 
-        onError: function (err) {
-          console.error(err);
-          alert('An error occurred during the PayPal transaction.');
-        }
-      }).render('#paypal-button-container');
+          onError: function (err) {
+            console.error(err);
+            alert('An error occurred during the PayPal payment process. Please try again.');
+          }
+        });
+
+        paypalButtonsInstance.render('#paypal-button-container');
+
+        // Attach your own button to trigger PayPal payment flow
+        document.getElementById('my-paypal-btn').addEventListener('click', function () {
+          paypalButtonsInstance.click();
+        });
     </script>
+    
+    <%- include("partials/msgFlash") %>
 </body>
+
 
 </html>

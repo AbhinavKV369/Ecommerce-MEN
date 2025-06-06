@@ -11,7 +11,6 @@
 </head>
 
 <body>
-
     <%- include("partials/navbar") %>
 
         <div class="container py-5">
@@ -22,11 +21,11 @@
                 <form id="filterForm" action="/products" method="get">
                     <div class="row g-3">
                         <div class="col-md-3">
-                            <input type="text" class="form-control" name="search" placeholder="Search for vehicles..."
-                                aria-label="Search for vehicles" />
+                            <input type="text" class="form-control" name="search"
+                                placeholder="Search for vehicles..." />
                         </div>
                         <div class="col-md-3">
-                            <select name="category" class="form-select" aria-label="Select Category">
+                            <select name="category" class="form-select">
                                 <option value="">Select Category</option>
                                 <option value="lmv">Light Vehicles</option>
                                 <option value="mmv">Medium Vehicles</option>
@@ -35,7 +34,7 @@
                             </select>
                         </div>
                         <div class="col-md-3">
-                            <select name="sortBy" class="form-select" aria-label="Sort By">
+                            <select name="sortBy" class="form-select">
                                 <option value="">Sort By</option>
                                 <option value="low-to-high">Price: Low to High</option>
                                 <option value="high-to-low">Price: High to Low</option>
@@ -57,11 +56,10 @@
                                 <!-- Wishlist Button -->
                                 <% const isWishlisted=wishlist && wishlist.items.some(item=> item.product._id.toString()
                                     === product._id.toString()); %>
-                                    <form action="/wishlist/toggle" method="post"
-                                        class="wishlist-toggle-form position-absolute top-0 end-0 m-2">
-                                        <input type="hidden" name="product" value="<%= product._id %>" />
-                                        <button type="submit"
-                                            class="btn btn-sm rounded-circle <%= isWishlisted ? 'btn-danger' : 'btn-light' %>">
+                                    <form class="wishlist-toggle-form position-absolute top-0 end-0 m-2"
+                                        data-product-id="<%= product._id %>">
+                                        <button type="button" aria-label="Toggle Wishlist for <%= product.name %>"
+                                            class="btn btn-sm rounded-circle wishlist-btn <%= isWishlisted ? 'btn-danger' : 'btn-light' %>">
                                             <i class="bi <%= isWishlisted ? 'bi-heart-fill' : 'bi-heart' %>"></i>
                                         </button>
                                     </form>
@@ -102,31 +100,31 @@
         <%- include("partials/scrollUp") %>
             <%- include("partials/footer") %>
                 <%- include("partials/scripts") %>
-                    <%- include("partials/FlashUI") %>
+                    <%- include("partials/msgFlash") %>
 
+                        <!-- AJAX Filter -->
                         <script>
                             document.getElementById("filterForm").addEventListener("submit", async function (e) {
                                 e.preventDefault();
-
                                 const form = e.target;
                                 const formData = new URLSearchParams(new FormData(form));
+                                const url = form.action + "?" + formData.toString();
+                                history.pushState(null, '', url);
 
                                 try {
-                                    const res = await fetch(form.action + "?" + formData.toString(), {
-                                        headers: {
-                                            "X-Requested-With": "XMLHttpRequest"
-                                        }
+                                    const res = await fetch(url, {
+                                        headers: { "X-Requested-With": "XMLHttpRequest" }
                                     });
 
                                     if (res.ok) {
                                         const html = await res.text();
                                         const temp = document.createElement("div");
                                         temp.innerHTML = html;
-
                                         const newContent = temp.querySelector("#productList");
                                         const productList = document.getElementById("productList");
                                         if (newContent && productList) {
                                             productList.innerHTML = newContent.innerHTML;
+                                            bindWishlistToggleButtons();
                                         }
                                     } else {
                                         console.error("Failed to load products.");
@@ -137,6 +135,8 @@
                             });
                         </script>
 
+                       
+                        <%- include("partials/wishlistToggle") %>
 </body>
 
 </html>

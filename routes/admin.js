@@ -39,46 +39,54 @@ const {
   handleToggleCouponStatus,
   handleDeleteCoupon,
   handleSearchCoupons,
+  handleAdminLogout,
+  handleReplyToUser,
 } = require("../controllers/admin");
 
+const adminAuth = require("../middleware/adminAuth");
+
 createDefaultAdmin();
+
 
 router.get("/login", handleGetAdminLogin);
 router.post("/login", handlePostAdminLogin);
 
 
-router.get("/", handleGetAdminPanel);
+router.get("/",adminAuth, handleGetAdminPanel);
 
-router.get("/manage-users", handleGetUsers);
-router.get("/edit-user/:id", handleGetUserProfile);
-router.post("/update-profile/:id", handleUpdateUserProfile);
-router.post("/toggle-user-status/:id", handleUserStatus);
-router.post("/search-users", handleGetSearchUsers);
+router.get("/manage-users",adminAuth, handleGetUsers);
+router.get("/edit-user/:id",adminAuth,handleGetUserProfile);
+router.post("/update-profile/:id",adminAuth, handleUpdateUserProfile);
+router.post("/toggle-user-status/:id",adminAuth, handleUserStatus);
+router.post("/search-users",adminAuth, handleGetSearchUsers);
 
-router.get("/manage-products", handleGetProducts);
-router.get("/add-products", handleGetAddProducts);
-router.post("/add-product", upload.array("productImage[]", 5), handlePostAddProducts);
-router.get("/edit-product/:id", handleEditProduct);
-router.post("/edit-product/:id", upload.array("productImage[]", 5), handleUpdateProduct);
-router.post("/delete-product/:id", handleDeleteProducts);
+router.get("/manage-products",adminAuth, handleGetProducts);
+router.get("/add-products",adminAuth, handleGetAddProducts);
+router.post("/add-product",adminAuth, upload.array("productImage[]", 5), handlePostAddProducts);
+router.get("/edit-product/:id",adminAuth, handleEditProduct);
+router.post("/edit-product/:id",adminAuth, upload.array("productImage[]", 5), handleUpdateProduct);
+router.post("/delete-product/:id",adminAuth, handleDeleteProducts);
 
 router.get("/manage-orders", handleGetManageOrders);
 router.get("/view-user-order/:id", handleViewUserOrderDetails);
 router.post("/update-order-status/:id", handleOrderStatus);
-router.post("/delete-order/:id", handleDeleteOrder);
+router.post("/delete-order/:id",adminAuth, handleDeleteOrder);
 
-router.get("/manage-coupons", handleGetAllCoupons);
-router.post("/manage-coupons",handleCreateCoupon);
+router.get("/manage-coupons",adminAuth,handleGetAllCoupons);
+router.post("/manage-coupons",adminAuth,handleCreateCoupon);
 
-router.post("/coupons/toggle/:id",handleToggleCouponStatus);
-router.get("/coupons/delete/:id",handleDeleteCoupon);
-router.post("/manage-coupons/search", handleSearchCoupons);
-router.get("/add-banner", handleGetAddBanner);
+router.post("/coupons/toggle/:id",adminAuth,handleToggleCouponStatus);
+router.get("/coupons/delete/:id",adminAuth,handleDeleteCoupon);
+router.post("/manage-coupons/search",adminAuth,handleSearchCoupons);
+router.get("/add-banner",adminAuth, handleGetAddBanner);
 router.post("/add-banner", upload.single("bannerImage"), handlePostAddBanner);
 
-router.get("/user-messages", handleGetMessages);
-router.post("/delete-message/:id", handleDeleteMessages);
-router.post("/search-messages", handleGetSearchMessages);
+router.get("/user-messages",adminAuth,handleGetMessages);
+router.post("/search-messages",adminAuth,handleGetSearchMessages);
+router.post("/reply-to-user",adminAuth,handleReplyToUser);
+router.post("/delete-message/:id",adminAuth, handleDeleteMessages);
+
+router.get("/logout",handleAdminLogout);
 
 const pages = [{ route: "/server-error", view: "server-error" }];
 

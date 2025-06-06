@@ -4,7 +4,7 @@ const ensureAuth = require("../middleware/ensureAuth");
 const {
   handleGetWishlist,
   handleToggleWishlist,
-} = require("../controllers/wishlist");
+} = require("../controllers/wishlist"); 
 
 const router = express.Router();
 

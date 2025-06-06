@@ -3,6 +3,7 @@
 <script src="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.js"></script>
 
 <script>
+                   
     const notyf = new Notyf({
         duration: 3000,
         position: { x: 'center', y: 'top' }
@@ -15,4 +16,5 @@
 <% if (messages.error) { %>
         notyf.error(<%- JSON.stringify(messages.error) %>);
 <% } %>
+
 </script>

@@ -12,7 +12,6 @@
     <%- include("partials/head") %>
 
         <style>
-            /* Flexbox layout to keep footer at bottom */
             html,
             body {
                 height: 100%;
@@ -29,6 +28,7 @@
             main {
                 flex-grow: 1;
             }
+
         </style>
 </head>
 
@@ -44,7 +44,7 @@
                         data-id="<%= item.product._id %>">
 
                         <div class="col-12 col-md-2 mb-3 mb-md-0">
-                            <img src="<%= item.product?.productImages[0] || '' %>" class="img-fluid"
+                            <img src="<%= item.product?.productImages[0] || '/images/default.png' %>" class="img-fluid"
                                 alt="<%= item.product?.name ?? 'Product image' %>">
                         </div>
 
@@ -63,18 +63,20 @@
                                 <span class="mx-2 fw-semibold quantity">
                                     <%= item.quantity %>
                                 </span>
-                                <button class="btn btn-sm btn-outline-secondary increment-btn">+</button>
+                                <button class="btn btn-sm btn-outline-secondary increment-btn" <%=item.product.stock &&
+                                    item.quantity>= item.product.stock ? 'disabled' : '' %>>+</button>
                             </div>
                         </div>
 
                         <div class="col-12 col-md-2 mb-3 mb-md-0">
                             <h6 class="text-muted">Subtotal</h6>
-                            <p class="fw-semibold subtotal">₹<%= item.product.price * item.quantity %>
+                            <p class="fw-semibold subtotal">₹<%= (item.product.price * item.quantity).toFixed(2) %>
                             </p>
                         </div>
 
                         <div class="col-12 col-md-2 text-md-end">
-                            <button class="btn btn-md bg-danger btn-remove text-white">Remove</button>
+                            <button class="btn btn-md bg-danger btn-remove text-white"
+                                title="Remove this item">Remove</button>
                         </div>
                     </div>
                     <% }) %>
@@ -93,7 +95,7 @@
                                     <div class="d-flex justify-content-between mb-4">
                                         <span>Total Price:</span>
                                         <strong>₹<span id="totalAmount">
-                                                <%= total %>
+                                                <%= total.toFixed(2) %>
                                             </span></strong>
                                     </div>
                                     <a href="/checkout" class="text-decoration-none">
@@ -119,58 +121,87 @@
             <%- include("partials/footer") %>
                 <%- include("partials/scripts") %>
 
+                    <!-- Notyf -->
+                    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.css" />
+                    <script src="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.js"></script>
+
                     <script>
-                        $(function () {
-                            // Increment quantity
-                            $(".increment-btn").click(function () {
-                                const row = $(this).closest(".cart-item");
-                                const productId = row.data("id");
-                                $.post(`/cart/increment/${productId}`, function (res) {
-                                    updateCartRow(row, res);
-                                });
-                            });
+                        document.addEventListener("DOMContentLoaded", () => {
+                            const notyf = new Notyf({
+                                duration: 1000,
+                                position: { x: 'right', y: 'top' }
+                            } );
+                            const cartItems = document.querySelectorAll(".cart-item");
 
-                            // Decrement quantity
-                            $(".decrement-btn").click(function () {
-                                const row = $(this).closest(".cart-item");
-                                const productId = row.data("id");
-                                $.post(`/cart/decrement/${productId}`, function (res) {
-                                    if (res.quantity === 0) {
-                                        row.remove();
-                                    } else {
-                                        updateCartRow(row, res);
+                            cartItems.forEach(row => {
+                                const productId = row.dataset.id;
+
+                                row.querySelector(".increment-btn")?.addEventListener("click", async () => {
+                                    try {
+                                        const res = await fetch(`/cart/increment/${productId}`, { method: "POST" });
+                                        const data = await res.json();
+                                        updateCartRow(row, data);
+                                        notyf.success("Item quantity increased");
+                                    } catch (err) {
+                                        console.error("Error incrementing item:", err);
+                                        notyf.error("Error increasing quantity");
                                     }
-                                    if (res.totalQuantity === 0) location.reload();
                                 });
-                            });
 
-                            // Remove item from cart
-                            $(".btn-remove").click(function () {
-                                const row = $(this).closest(".cart-item");
-                                const productId = row.data("id");
-                                $.post(`/remove-item/${productId}`, function (res) {
-                                    row.remove();
-                                    $("#totalAmount").text(res.total);
-                                    $("#totalQuantity").text(res.totalQuantity);
-                                    if (res.totalQuantity === 0) location.reload();
+                                row.querySelector(".decrement-btn")?.addEventListener("click", async () => {
+                                    try {
+                                        const res = await fetch(`/cart/decrement/${productId}`, { method: "POST" });
+                                        const data = await res.json();
+
+                                        if (data.quantity === 0) {
+                                            row.remove();
+                                        } else {
+                                            updateCartRow(row, data);
+                                        }
+
+                                        if (data.totalQuantity === 0) {
+                                            setTimeout(() => location.reload(), 300);
+                                        } else {
+                                            notyf.success("Item quantity decreased");
+                                        }
+                                    } catch (err) {
+                                        console.error("Error decrementing item:", err);
+                                        notyf.error("Error decreasing quantity");
+                                    }
+                                });
+
+                                row.querySelector(".btn-remove")?.addEventListener("click", async () => {
+                                    try {
+                                        const res = await fetch(`/remove-item/${productId}`, { method: "POST" });
+                                        const data = await res.json();
+
+                                        row.remove();
+                                        document.getElementById("totalAmount").textContent = parseFloat(data.total).toFixed(2);
+                                        document.getElementById("totalQuantity").textContent = data.totalQuantity;
+
+                                        notyf.success("Item removed");
+
+                                        if (data.totalQuantity === 0) {
+                                            setTimeout(() => location.reload(), 300);
+                                        }
+                                    } catch (err) {
+                                        console.error("Error removing item:", err);
+                                        notyf.error("Failed to remove item");
+                                    }
                                 });
                             });
 
                             function updateCartRow(row, data) {
-                                row.find(".quantity").text(data.quantity);
-                                row.find(".subtotal").text("₹" + data.subTotal);
-                                row.find(".decrement-btn").prop("disabled", data.quantity === 1);
-                                $("#totalAmount").text(data.total);
-                                $("#totalQuantity").text(data.totalQuantity);
+                                row.querySelector(".quantity").textContent = data.quantity;
+                                row.querySelector(".subtotal").textContent = "₹" + parseFloat(data.subTotal).toFixed(2);
+                                row.querySelector(".decrement-btn").disabled = data.quantity === 1;
+                                document.getElementById("totalAmount").textContent = parseFloat(data.total).toFixed(2);
+                                document.getElementById("totalQuantity").textContent = data.totalQuantity;
                             }
                         });
                     </script>
-                    <!-- notyf-partial.ejs -->
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.css" />
-<script src="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.js"></script>
 
-<%- include("partials/flashUI") %>
-
+                    <%- include("partials/msgFlash") %>
 </body>
 
 </html>

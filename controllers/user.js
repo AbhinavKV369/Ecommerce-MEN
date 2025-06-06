@@ -3,7 +3,7 @@ const Message = require("../models/message");
 const Coupon = require("../models/coupon")
 const jwt = require("jsonwebtoken");
 const { hashTheValue, compareTheValue } = require("../services/hashing");
-const { generateOTP, sendOTP } = require("../services/nodeMailer");
+const { generateOTP, sendMessage } = require("../services/nodeMailer");
 const secret = process.env.JWT_SECRET;
 // POST: Register
 
@@ -43,7 +43,7 @@ async function handlePostRegister(req, res) {
     });
 
     await newUser.save();
-    await sendOTP(email, otpCode);
+    await sendMessage(email,`Your OTP code is ${otpCode}`);
 
     const payload = { user: { id: newUser.id } };
     const token = jwt.sign(payload, secret);
@@ -101,14 +101,19 @@ async function handlePostLogin(req, res) {
   try {
     const user = await User.findOne({ email });
     if (!user) {
+      console.log("Incorrect email")
+      alert("User not found")
       req.flash("error", "User not found");
-      return res.redirect("/login");
+      return res.render("client/login");
     }
 
     const isPasswordMatch = await compareTheValue(password, user.password);
     if (!isPasswordMatch) {
+      console.log("Incorrect password")
+      alert("User not found")
       req.flash("error", "Incorrect password");
-      return res.redirect("/login");
+
+      return res.render("client/login");
     }
 
     const payload = { user: { id: user.id } };
@@ -143,7 +148,7 @@ async function handlePostForgotPassword(req, res) {
     user.resetOtp = resetOtp;
     user.resetOtpExpires = Date.now() + 5 * 60 * 1000;
     await user.save();
-    await sendOTP(email, resetOtp);
+    await sendMessage(email,`Your OTP reset code is ${resetOtp}`);
 
     req.flash("success", "OTP sent to email, please verify");
     return res.redirect(`/reset-otp?email=${encodeURIComponent(email)}`);
@@ -377,7 +382,7 @@ async function handleSubmitMessage(req, res) {
 
 async function handleLogout(req, res) {
   try {
-    res.clearCookie('token', { httpOnly: true });
+    res.clearCookie('token');
     req.flash('success', 'You have logged out successfully.');
     res.redirect('/');
   } catch (error) {

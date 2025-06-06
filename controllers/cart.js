@@ -103,8 +103,6 @@ async function handleDeleteCartItem(req, res) {
     ).populate("items.product");
 
     const total = cart?.items.reduce((sum, item) => sum + item.product.price * item.quantity, 0) || 0;
-    const totalQuantity = cart?.items.reduce((sum, item) => sum + item.quantity, 0) || 0;
-
     res.json({ success: true, message: "Item removed", total, totalQuantity });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });

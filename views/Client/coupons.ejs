@@ -30,6 +30,10 @@
                 transform: scale(1.02);
             }
 
+            .copy-btn {
+                margin-left: 10px;
+            }
+
             @media (max-width: 575.98px) {
                 .coupon-card {
                     padding: 15px;
@@ -56,10 +60,13 @@
                             <% coupons.forEach(coupon=> { %>
                                 <div class="col-12 col-sm-6 col-lg-4 d-flex">
                                     <div class="coupon-card shadow-sm w-100">
-                                        <h5 class="fw-bold text-success mb-3">
-                                            <span class="coupon-code">
+                                        <h5
+                                            class="fw-bold text-success mb-3 d-flex justify-content-between align-items-center">
+                                            <span class="coupon-code" id="code-<%= coupon.code %>">
                                                 <%= coupon.code %>
                                             </span>
+                                            <button class="btn btn-sm btn-outline-primary copy-btn"
+                                                data-code="<%= coupon.code %>">Copy</button>
                                         </h5>
                                         <p><strong>Discount:</strong> ₹<%= coupon.discountAmount %> off</p>
                                         <p><strong>Expires On:</strong>
@@ -76,6 +83,22 @@
 
             <%- include("partials/footer") %>
                 <%- include("partials/scripts") %>
+
+                    <script>
+                        document.addEventListener('DOMContentLoaded', () => {
+                            document.querySelectorAll('.copy-btn').forEach(button => {
+                                button.addEventListener('click', () => {
+                                    const code = button.getAttribute('data-code');
+                                    navigator.clipboard.writeText(code).then(() => {
+                                        button.innerText = 'Copied!';
+                                        setTimeout(() => {
+                                            button.innerText = 'Copy';
+                                        }, 1500);
+                                    });
+                                });
+                            });
+                        });
+                    </script>
     </body>
 
 </html>

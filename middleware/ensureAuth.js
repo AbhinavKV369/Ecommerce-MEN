@@ -1,9 +1,13 @@
 function ensureAuthenticated(req, res, next) {
-    if (!req.user) {
-      req.flash('error',"You need to login first")
+  if (!req.user) {
+    if (req.xhr ) {
+      return res.status(401).json({ success: false, message: "You need to login first" });
+    } else {
+      req.flash('error', "You need to login first");
       return res.redirect('/login');
     }
-    next();
   }
+  next();
+}
 
-module.exports = ensureAuthenticated ;
+module.exports = ensureAuthenticated;

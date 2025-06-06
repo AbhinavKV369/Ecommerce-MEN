@@ -9,10 +9,11 @@ const Message = require("../models/message");
 const Coupon = require("../models/coupon")
 const Cart = require("../models/cart");
 const Wishlist = require("../models/wishlist");
+const { sendMessage } = require("../services/nodeMailer")
 
 async function createDefaultAdmin() {
   try {
-    const existingAdmin = await User.findOne({ role: process.env.ADMIN_NAME });
+    const existingAdmin = await User.findOne({ name: process.env.ADMIN_NAME });
 
     if (!existingAdmin) {
       const hashedPassword = await bcrypt.hash(process.env.ADMIN_PASSWORD,10); 
@@ -74,22 +75,61 @@ async function handlePostAdminLogin(req, res) {
   }
 }
 
-async function handleGetAdminPanel(req, res) {
+async function  handleGetAdminPanel(req, res){
   try {
-    const totalProducts = await Product.countDocuments();
-    const totalUsers = await User.countDocuments(); 
-    const totalOrders = await Order.countDocuments();
+    // Count collections in parallel
+    const [totalProducts, totalUsers, totalOrders] = await Promise.all([
+      Product.countDocuments(),
+      User.countDocuments(),
+      Order.countDocuments()
+    ]);
 
-    const totalAmount = await Order.aggregate([
+    const revenueAgg = await Order.aggregate([
+      { $match: { status: "delivered" } },
       { $group: { _id: null, total: { $sum: "$totalAmount" } } }
     ]);
-    const totalRevenue = totalAmount[0]?.total || 0;
 
-    const latestUser = await User.findOne().sort({ createdAt: -1 });
-    const latestProduct = await Product.findOne().sort({ createdAt: -1 });
-    const latestOrder = await Order.findOne().populate("user").sort({ createdAt: -1 });
+    const totalRevenue = revenueAgg.length > 0 ? revenueAgg[0].total : 0;
 
+    const [latestUser, latestProduct, latestOrder] = await Promise.all([
+      User.findOne().sort({ createdAt: -1 }),
+      Product.findOne().sort({ createdAt: -1 }),
+      Order.findOne().sort({ createdAt: -1 }).populate("user")
+    ]);
+
+   
+    const orders = await Order.find();
+
+ 
     const latestShipped = await Order.countDocuments({ status: "shipped" });
+
+   
+    const trendingProducts = await Order.aggregate([
+      { $unwind: "$items" },
+      {
+        $group: {
+          _id: "$items.product",
+          totalOrdered: { $sum: "$items.quantity" }
+        }
+      },
+      { $sort: { totalOrdered: -1 } },
+      { $limit: 5 },
+      {
+        $lookup: {
+          from: "products",
+          localField: "_id",
+          foreignField: "_id",
+          as: "productDetails"
+        }
+      },
+      { $unwind: "$productDetails" },
+      {
+        $project: {
+          name: "$productDetails.name",
+          totalOrdered: 1
+        }
+      }
+    ]);
 
     res.render("admin/admin-panel", {
       totalProducts,
@@ -100,13 +140,17 @@ async function handleGetAdminPanel(req, res) {
       latestProduct,
       latestOrder,
       latestShipped,
+      orders,
+      trendingProducts
     });
+
   } catch (error) {
+    console.error("Admin Panel Error:", error.message);
     res.status(500).render("server-error", {
-      message: error.message,
+      message: "Internal Server Error",
     });
   }
-}
+};
 
 async function handleGetUsers(req, res) {
   const users = await User.find({});
@@ -271,12 +315,7 @@ async function handleDeleteProducts(req, res) {
   }
 }
 
-async function handleGetMessages(req, res) {
-  const messages = await Message.find({});
-  res.status(200).render("admin/user-messages", {
-    messages,
-  });
-}
+
 
 async function handleGetManageOrders(req, res) {
   const orders = await Order.find({}).populate("user");
@@ -427,10 +466,37 @@ async function handleGetSearchMessages(req, res) {
   }
 }
 
+async function handleGetMessages(req, res) {
+  const messages = await Message.find({}).sort({createdAt:1});
+  res.status(200).render("admin/user-messages", {
+    messages,
+    reply: req.query.reply,
+  });
+}
+
 async function handleDeleteMessages(req, res) {
   try {
     await Message.findByIdAndDelete(req.params.id);
     res.redirect("/admin/user-messages");
+  } catch (error) {
+    res.status(500).render("server-error", {
+      message: error.message,
+    });
+  }
+}
+
+
+async function handleReplyToUser(req, res) {
+  try {
+    const { email, message } = req.body;
+
+    if (!email || !message) {
+      return res.status(400).send({error: "Email and message are required."});
+    }
+
+    await sendMessage(email, message);
+
+    res.redirect("/admin/user-messages?reply=success");
   } catch (error) {
     res.status(500).render("server-error", {
       message: error.message,
@@ -489,6 +555,17 @@ async function handlePostAddBanner(req, res) {
   }
 }
 
+async function handleAdminLogout(req,res) {
+  try {
+    res.clearCookie('adminToken');
+    req.flash('success', 'Admin logout successful');
+    res.redirect('/');
+  } catch (error) {
+    req.flash('error', 'Server error: ' + error.message);
+    res.redirect('/');
+  }
+}
+
 module.exports = {
   createDefaultAdmin,
   handleGetAdminLogin,
@@ -521,8 +598,10 @@ module.exports = {
 
   handleGetMessages,
   handleGetSearchMessages,
+  handleReplyToUser,
   handleDeleteMessages,
 
   handleGetAddBanner,
   handlePostAddBanner,
+  handleAdminLogout,
 };

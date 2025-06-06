@@ -51,16 +51,17 @@
                         </h4>
 
                         <!-- Wishlist Button -->
-
-                        <% const isWishlisted = wishlist && wishlist.items.some(item => item.product.id.toString() === product.id.toString()) %>
-
-                        <form action="/wishlist/toggle" method="post" class="mb-3">
-                            <input type="hidden" name="product" value="<%= product.id %>">
-                            <button type="submit" class="btn btn-outline-danger w-100">
-                                <i class="bi <%= isWishlisted ? 'bi-heart-fill' : 'bi-heart' %> me-2"></i>
-                                <%= isWishlisted ? 'Remove from Wishlist' : 'Add to Wishlist' %>
-                            </button>
-                        </form>
+                        <% const isWishlisted=wishlist && wishlist.items.some(item=> item.product.id.toString() === product.id.toString()) %>
+                        
+                            <form class="wishlist-toggle-form mb-3" data-product-id="<%= product.id %>">
+                                <button type="button" class="btn btn-outline-danger text-dark fw-bold w-100">
+                                    <i class="bi <%= isWishlisted ? 'bi-heart-fill' : 'bi-heart' %> me-2"></i>
+                                    <span>
+                                        <%= isWishlisted ? 'Remove from Wishlist' : 'Add to Wishlist' %>
+                                    </span>
+                                </button>
+                            </form>
+                        
 
                         <!-- Add to Cart -->
                         <form action="/add-cart" method="post">
@@ -76,8 +77,10 @@
             <%- include("partials/footer") %>
             
                 <%- include("partials/scripts") %>
-                <%- include("partials/flashUI") %>
+                <%- include("partials/wishlistToggle") %>
+                    ``
 
+                <%- include("partials/flashUI") %>
 
 </body>
 
